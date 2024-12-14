@@ -99,7 +99,50 @@ export class HomewizardPowerConsumption implements DynamicPlatformPlugin {
       }
     }
   }
+  
+// Tässä HomeWizard-lisälaitteen luokka
+class HomeWizardAccessory {
+    constructor(log, config, api) {
+        this.log = log;
+        this.config = config;
+        this.api = api;
 
+        // Fakegato-historian alustaminen
+        this.loggingService = new FakeGatoHistoryService('energy', this, {
+            storage: 'fs',
+            path: './fakegatoStorage',
+            disableTimer: false
+        });
+
+        this.currentPower = 0; // Alkuarvo
+        this.totalConsumption = 0; // Alkuarvo
+
+        this.service = new this.api.hap.Service.Switch(this.config.name);
+        this.service.addCharacteristic(this.loggingService);
+
+        this.api.on('didFinishLaunching', () => {
+            this.updateEnergyData();
+        });
+    }
+
+    updateEnergyData() {
+        // Lisää energiankulutustiedot Fakegatoon
+        setInterval(() => {
+            this.currentPower = Math.random() * 1000; // Simuloitu kulutus
+            this.totalConsumption += this.currentPower / 3600000;
+
+            this.loggingService.addEntry({
+                time: Math.round(new Date().valueOf() / 1000),
+                power: this.currentPower,
+                total: this.totalConsumption
+            });
+
+            this.log(`Power: ${this.currentPower} W, Total: ${this.totalConsumption.toFixed(2)} kWh`);
+        }, 60000); // 1 min päivitys
+    }
+}
+
+  
   private async heartBeat() {
     try {
       const { data } = await axios.get(`http://${this.config.ip}/api/v1/data`);
