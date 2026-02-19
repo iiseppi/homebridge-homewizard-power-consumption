@@ -1,23 +1,39 @@
 {
-  "pluginAlias": "HomewizardPowerConsumption",
+  "pluginAlias": "HomeWizardPowerConsumption",
   "pluginType": "platform",
   "singular": true,
   "schema": {
     "type": "object",
     "properties": {
       "ip": {
-        "title": "Wi-Fi P1 Meter IP address",
+        "title": "HomeWizard Device IP address",
         "type": "string",
         "required": true,
+        "format": "ipv4",
         "default": ""
       },
       "pollInterval": {
         "title": "Poll interval (in seconds)",
         "type": "number",
         "required": true,
-        "default": 60,
+        "default": 10,
         "minimum": 1,
         "maximum": 3600
+      },
+      "enableHistory": {
+        "title": "Enable Eve History (fakegato)",
+        "type": "boolean",
+        "default": true
+      },
+      "apiVersion": {
+        "title": "API Version",
+        "type": "string",
+        "default": "auto",
+        "oneOf": [
+          { "title": "Auto Detect", "enum": ["auto"] },
+          { "title": "Version 1 (Old)", "enum": ["v1"] },
+          { "title": "Version 2 (New)", "enum": ["v2"] }
+        ]
       },
       "hidePowerConsumptionDevice": {
         "title": "Hide Power Consumption sensor",
