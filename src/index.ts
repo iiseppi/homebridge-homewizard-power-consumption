@@ -1,8 +1,10 @@
 import { API } from 'homebridge';
-import { HomewizardPowerConsumption } from './Platform';
+import { PLATFORM_NAME } from './settings';
+import { HomewizardPowerConsumption } from './platform';
 
-const FakeGatoHistoryService = require('fakegato-history');
-
+/**
+ * This method registers the platform with Homebridge
+ */
 export = (api: API) => {
-  api.registerPlatform('HomewizardPowerConsumption', HomewizardPowerConsumption);
+  api.registerPlatform(PLATFORM_NAME, HomewizardPowerConsumption);
 };
