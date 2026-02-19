@@ -1,16 +1,16 @@
 {
   "name": "homebridge-homewizard-power-consumption",
   "displayName": "Homewizard Power Consumption",
-  "version": "1.6.4",
-  "description": "See current power consumption and power return in Homekit",
+  "version": "2.0.0",
+  "description": "See current power consumption and power return in Homekit with Eve History support",
   "license": "Apache-2.0",
-  "author": "Jasper Seinhorst",
+  "author": "iiseppi",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jasper-seinhorst/homebridge-homewizard-power-consumption.git"
+    "url": "https://github.com/iiseppi/homebridge-homewizard-power-consumption.git"
   },
   "bugs": {
-    "url": "https://github.com/jasper-seinhorst/homebridge-homewizard-power-consumption/issues"
+    "url": "https://github.com/iiseppi/homebridge-homewizard-power-consumption/issues"
   },
   "engines": {
     "node": ">=18",
@@ -27,26 +27,26 @@
     "homebridge-plugin",
     "homebridge",
     "homewizard",
-    "eco",
+    "p1",
+    "fakegato",
+    "eve-energy",
     "power-consumption",
     "power-return",
-    "solar",
-    "solar-panels",
-    "p1",
     "solar-yield"
   ],
+  "dependencies": {
+    "axios": "^1.6.7",
+    "fakegato-history": "^0.6.2"
+  },
   "devDependencies": {
     "@types/node": "^20.11.25",
-    "@typescript-eslint/eslint-plugin": "^5.59.8",
-    "@typescript-eslint/parser": "^5.59.8",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
     "eslint": "^8.57.0",
     "homebridge": "^1.8.0",
-    "nodemon": "^2.0.22",
+    "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
-  },
-  "dependencies": {
-    "axios": "^1.6.7"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
   }
 }
