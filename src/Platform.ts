@@ -12,6 +12,7 @@ export class HomewizardPowerConsumption implements DynamicPlatformPlugin {
   private heartBeatInterval: number;
   private devices: any[] = [];
   private targetIp: string = '';
+  private deviceData: any; // Lisätty laitetietojen tallennus
 
   constructor(public readonly log: Logger, public readonly config: PlatformConfig, public readonly api: API) {
     this.Service = this.api.hap.Service;
@@ -28,25 +29,32 @@ export class HomewizardPowerConsumption implements DynamicPlatformPlugin {
   }
 
   private async initialise() {
-    // Luetaan IP oikeasta paikasta (devices-taulukon sisältä)
     this.targetIp = this.config.ip || (this.config.devices && this.config.devices[0] && this.config.devices[0].ip);
 
     if (!this.targetIp) {
-      this.log.error('IP-osoite puuttuu asetuksista! Tarkista config.json.');
+      this.log.error('IP-osoite puuttuu asetuksista!');
       return;
     }
 
-    this.log.info(`Yritetään yhdistää mittariin osoitteessa: http://${this.targetIp}/api/v1/data`);
-    
-    // Testataan yhteys suoraan data-osoitteeseen
     try {
-      const response = await axios.get(`http://${this.targetIp}/api/v1/data`, { timeout: 5000 });
-      this.log.info('Yhteys muodostettu! Aloitetaan lukeminen.');
+      // 1. Haetaan ensin laitteen metatiedot (tämä korjaa TSC virheen)
+      this.log.info(`Haetaan laitetiedot osoitteesta: http://${this.targetIp}/api`);
+      const metaResponse = await axios.get(`http://${this.targetIp}/api`, { timeout: 5000 });
+      this.deviceData = metaResponse.data;
+
+      // 2. Testataan vielä, että data-osoite vastaa
+      this.log.info(`Varmistetaan yhteys data-rajapintaan...`);
+      await axios.get(`http://${this.targetIp}/api/v1/data`, { timeout: 5000 });
+      
+      this.log.info('Yhteys kunnossa! Luodaan laitteet.');
       this.setupAccessories();
+      
+      // 3. Käynnistetään päivitykset
       await this.heartBeat();
       setInterval(() => this.heartBeat(), this.heartBeatInterval);
+      
     } catch (error) {
-      this.log.error(`Yhteys epäonnistui osoitteeseen http://${this.targetIp}/api/v1/data. Tarkista Local API -asetus HomeWizard-sovelluksesta.`);
+      this.log.error(`Yhteys epäonnistui osoitteeseen http://${this.targetIp}. Varmista IP ja Local API.`);
     }
   }
 
@@ -56,7 +64,8 @@ export class HomewizardPowerConsumption implements DynamicPlatformPlugin {
     
     if (!this.config.hidePowerConsumptionDevice) {
       const accessory = existingConsumption || new this.api.platformAccessory('Power Consumption', consumptionUuid);
-      this.devices.push(new PowerConsumption(this.config, this.log, this.api, accessory, {}));
+      // Nyt annetaan oikeat laitetiedot (this.deviceData) tyhjän {} sijasta
+      this.devices.push(new PowerConsumption(this.config, this.log, this.api, accessory, this.deviceData));
       if (!existingConsumption) {
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }
@@ -67,7 +76,8 @@ export class HomewizardPowerConsumption implements DynamicPlatformPlugin {
     
     if (!this.config.hidePowerReturnDevice) {
       const accessory = existingReturn || new this.api.platformAccessory('Power Return', returnUuid);
-      this.devices.push(new PowerReturn(this.config, this.log, this.api, accessory, {}));
+      // Sama täällä
+      this.devices.push(new PowerReturn(this.config, this.log, this.api, accessory, this.deviceData));
       if (!existingReturn) {
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }
@@ -80,7 +90,7 @@ export class HomewizardPowerConsumption implements DynamicPlatformPlugin {
       const { data } = await axios.get(url);
       this.devices.forEach(d => d.beat(data));
     } catch (e) {
-      this.log.error(`Päivitys epäonnistui osoitteesta: ${url}`);
+      this.log.error(`Sähkölukemien haku epäonnistui osoitteesta: ${url}`);
     }
   }
 }
