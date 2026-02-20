@@ -18,17 +18,14 @@ export default class PowerConsumption implements HomewizardPowerConsumptionAcces
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
 
-    // Asetetaan laitteen perustiedot
     this.accessory.getService(this.Service.AccessoryInformation)!
       .setCharacteristic(this.Characteristic.Manufacturer, 'HomeWizard')
       .setCharacteristic(this.Characteristic.Model, device.product_name || 'P1 Meter')
       .setCharacteristic(this.Characteristic.SerialNumber, `${device.serial}-consumption`);
 
-    // Käytetään LightSensor-palvelua wattien näyttämiseen (lux = W)
     this.powerService = this.accessory.getService(this.Service.LightSensor) || 
                         this.accessory.addService(this.Service.LightSensor);
 
-    // Alustetaan FakeGato-historiapalvelu
     const FakeGatoService = FakeGatoHistoryService(this.api);
     this.historyService = new FakeGatoService('energy', this.accessory, {
       storage: 'fs',
@@ -38,19 +35,17 @@ export default class PowerConsumption implements HomewizardPowerConsumptionAcces
   }
 
   public beat(data: any) {
-    // Haetaan watit ja kokonaiskulutus (kWh)
     const watts = data.active_power_w || 0;
-    const totalKwh = data.total_power_import_kwh || 0;
+    // MUUTOS: Fakegato vaatii Wh (wattitunnit), P1 antaa kWh -> kerrotaan tuhannella.
+    const totalWh = (data.total_power_import_kwh || 0) * 1000;
     
-    // Päivitetään nykyinen kulutus Apple Kotiin (vähintään 0.0001 jotta HomeKit ei herjaa)
     this.powerService.updateCharacteristic(this.Characteristic.CurrentAmbientLightLevel, Math.max(0.0001, watts));
     
-    // Tallennetaan tieto historiaan
     if (this.historyService) {
       this.historyService.addEntry({
         time: Math.round(new Date().getTime() / 1000),
         power: watts,
-        energy: totalKwh // Tämä lisäys aktivoi graafin piirtämisen Evessä
+        energy: totalWh 
       });
     }
   }
